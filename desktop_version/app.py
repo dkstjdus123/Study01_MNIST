@@ -1,4 +1,4 @@
-# 작성: 2026-09-24 23:33
+# 작성: 2026-09-24 23:33 (수정: 23:39 가중치 불러오기 오류 안내 보강)
 """마우스로 그린 숫자를 학습된 CNN이 인식하는 그림판 앱입니다.
 
 실행: python app.py  (탐색기에서 더블클릭해도 됩니다)
@@ -187,6 +187,10 @@ def main():
         모델 = 모델_불러오기()
     except FileNotFoundError:
         오류창_띄우기(f"가중치 파일이 없습니다.\n{가중치경로}\n\n먼저 python train.py 로 학습해 주세요.")
+        return
+    except Exception as 오류:   # 깨졌거나 모델 구조와 맞지 않는 가중치 파일
+        오류창_띄우기(f"가중치 파일을 불러오지 못했습니다.\n{가중치경로}\n\n{오류}\n\n"
+                      "python train.py 로 다시 학습해 주세요.")
         return
     루트 = tk.Tk()
     if sys.platform == "win32" and os.path.exists(아이콘경로):
