@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<!-- 작성: 2026-09-24 17:50 KST -->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>손글씨 숫자 인식기</title>
+<style>
+  /* 색상 변수: 밝은 화면 */
+  :root {
+    --배경: #f6f7f9; --카드: #ffffff; --글자: #1f2328; --흐린글자: #656d76;
+    --강조: #1a73e8; --막대: #c9d1d9; --테두리: #d0d7de; --머리배경: #1a73e8; --머리글자: #ffffff;
+  }
+  /* 어두운 화면 */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --배경: #0d1117; --카드: #161b22; --글자: #e6edf3; --흐린글자: #8d96a0;
+      --강조: #58a6ff; --막대: #30363d; --테두리: #30363d; --머리배경: #1f3a5f; --머리글자: #ffffff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--배경); color: var(--글자);
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  }
+  /* 맨 위 학번·이름 표시줄 */
+  .학생정보 {
+    background: var(--머리배경); color: var(--머리글자);
+    text-align: center; padding: 14px 16px; font-size: 20px; font-weight: 700; letter-spacing: 0.02em;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  .설명 { color: var(--흐린글자); margin: 0 0 20px; }
+  .본문 { display: flex; gap: 24px; flex-wrap: wrap; }
+  .카드 {
+    background: var(--카드); border: 1px solid var(--테두리); border-radius: 12px; padding: 16px;
+  }
+  .그림판영역 { flex: 0 1 312px; }
+  canvas#그림판 {
+    display: block; width: 100%; max-width: 280px; aspect-ratio: 1; margin: 0 auto;
+    background: #000; border-radius: 8px; touch-action: none; cursor: crosshair;
+  }
+  button {
+    display: block; margin: 12px auto 0; padding: 8px 28px; font: inherit; font-size: 15px;
+    background: var(--카드); color: var(--글자); border: 1px solid var(--테두리); border-radius: 8px; cursor: pointer;
+  }
+  button:hover { border-color: var(--강조); }
+  .결과영역 { flex: 1 1 260px; }
+  .예측 { font-size: 72px; font-weight: 700; color: var(--강조); text-align: center; line-height: 1.1; }
+  .신뢰도 { text-align: center; color: var(--흐린글자); margin-bottom: 12px; min-height: 1.4em; }
+  .막대줄 { display: grid; grid-template-columns: 16px 1fr 52px; align-items: center; gap: 8px; margin: 4px 0; font-size: 14px; }
+  .막대틀 { height: 12px; background: var(--배경); border-radius: 6px; overflow: hidden; }
+  .막대 { height: 100%; width: 0; background: var(--막대); transition: width 0.15s; }
+  .막대.최대 { background: var(--강조); }
+  .퍼센트 { text-align: right; font-variant-numeric: tabular-nums; color: var(--흐린글자); }
+</style>
+</head>
+<body>
+  <!-- 페이지 맨 위: 학번과 이름 -->
+  <header class="학생정보">학번 2601953 이름 안서연</header>
+
+  <main>
+    <h1>손글씨 숫자 인식기</h1>
+    <p class="설명">검은 칸에 0~9 숫자를 그리면 순수 자바스크립트로 구현한 CNN이 브라우저 안에서 바로 인식합니다 (외부 라이브러리 없음).</p>
+
+    <div class="본문">
+      <section class="카드 그림판영역">
+        <canvas id="그림판" width="280" height="280"></canvas>
+        <button id="지우기">지우기</button>
+      </section>
+      <section class="카드 결과영역">
+        <div class="예측" id="예측">?</div>
+        <div class="신뢰도" id="신뢰도">숫자를 그려 보세요</div>
+        <div id="막대목록"></div>
+      </section>
+    </div>
+  </main>
+
+<script src="weights.js"></script>
+<script src="model.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
