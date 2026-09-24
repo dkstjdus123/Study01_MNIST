@@ -1,4 +1,4 @@
-<!-- 작성: 2026-09-24 19:25 (수정: 2026-09-24 19:39 두 버전 관계와 공통 규칙만 남김) (수정: 2026-09-24 22:16 검사 폴더 안내) -->
+<!-- 작성: 2026-09-24 19:25 (수정: 2026-09-24 19:39 두 버전 관계와 공통 규칙만 남김) (수정: 2026-09-24 22:16 검사 폴더 안내) (수정: 2026-09-24 22:30 PowerShell 명령과 Playwright 준비물 추가) -->
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -24,4 +24,4 @@ MNIST로 학습한 CNN 하나로 손글씨 숫자를 인식하는 프로그램�
   한쪽(`desktop_version/app.py`의 `전처리()` 또는 `web_version/전처리.js`)을 고치면 다른 쪽도 고치고 `web_version/검증.html`로 확인합니다.
 - 페이지 맨 위 "학번 2601953 이름 안서연" 표시줄은 과제 요구사항이므로 지우지 않습니다.
 - `CLAUDE_전역.md`(전역 CLAUDE.md 사본)는 과제 제출물이므로 지우지 않습니다.
-- **검사**: `검사/` 폴더의 스크립트로 태스크 1~7 결과를 다시 확인합니다. 저장소 루트에서 `python 검사/데스크톱_회귀.py`, `python 검사/가중치_검사.py`, `python 검사/검증데이터_검사.py`, `NODE_PATH="$(npm root -g)" node 검사/웹_검사.cjs`, `python 검사/문서_검사.py` 순서로 실행합니다 (웹 검사는 검증 데이터가 먼저 있어야 함).
+- **검사**: `검사/` 폴더의 스크립트로 계획서(`docs/superpowers/plans/2026-09-24-웹-데스크톱-버전-분리-재검증.md`)에 정의된 태스크 1~7 결과를 다시 확인합니다. 웹 검사는 Playwright가 필요하므로 처음 한 번은 `npm i -g playwright && npx playwright install chromium`으로 Playwright와 Chromium을 준비해 둡니다. 저장소 루트에서 `python 검사/데스크톱_회귀.py`, `python 검사/가중치_검사.py`, `python 검사/검증데이터_검사.py`, `NODE_PATH="$(npm root -g)" node 검사/웹_검사.cjs`(bash 기준; PowerShell에서는 `$env:NODE_PATH = (npm root -g); node 검사/웹_검사.cjs`), `python 검사/문서_검사.py` 순서로 실행합니다 (웹 검사는 검증 데이터가 먼저 있어야 함).

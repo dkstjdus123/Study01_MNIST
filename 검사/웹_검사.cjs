@@ -1,4 +1,4 @@
-// 작성: 2026-09-24 21:56 (수정: 2026-09-24 22:00 서버 정리 보강 / 22:03 전처리 검사 추가 / 22:07 화면 검사 추가 / 22:13 루트 이동 검사 보강)
+// 작성: 2026-09-24 21:56 (수정: 2026-09-24 22:00 서버 정리 보강 / 22:03 전처리 검사 추가 / 22:07 화면 검사 추가 / 22:13 루트 이동 검사 보강 / 22:30 NaN 검사와 Windows file URL 보정)
 // 태스크 4~6 검사: 로컬 서버를 켜고 실제 Chromium으로 검증.html과 웹 앱 화면을 확인합니다.
 // 실행 (저장소 루트): NODE_PATH="$(npm root -g)" node 검사/웹_검사.cjs [순전파|전처리|화면]  (인자가 없으면 전부)
 "use strict";
@@ -92,7 +92,8 @@ async function 화면_검사(브라우저) {
   await 페이지.click("#지우기");
   await 획_긋기(페이지, [[2, 2], [4, 3]]);
   await 페이지.waitForTimeout(300);
-  확인(/^[0-9?]$/.test(await 예측읽기(페이지)) && 페이지.오류.length === 0, "[집중 3] 가장자리 작은 점에도 오류·NaN 없음");
+  const 신뢰도글 = await 페이지.locator("#신뢰도").textContent();
+  확인(/^[0-9?]$/.test(await 예측읽기(페이지)) && 페이지.오류.length === 0 && !신뢰도글.includes("NaN"), "[집중 3] 가장자리 작은 점에도 오류·NaN 없음");
 
   await 페이지.click("#지우기");
   await 획_긋기(페이지, 일자, "right");
@@ -113,7 +114,7 @@ async function 화면_검사(브라우저) {
 
   // [집중 5] 파일로 직접 열기
   페이지 = await 새_페이지(브라우저);
-  await 페이지.goto("file://" + path.join(루트, "web_version", "index.html"));
+  await 페이지.goto(require("url").pathToFileURL(path.join(루트, "web_version", "index.html")).href);
   await 페이지.waitForFunction(() => document.getElementById("신뢰도").textContent.includes("http.server"));
   확인(await 페이지.getByText(학번이름).isVisible(), "[집중 5] file://로 열어도 학번·이름 표시와 로컬 서버 안내");
   await 페이지.close();

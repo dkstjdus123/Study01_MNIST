@@ -1,4 +1,4 @@
-# 작성: 2026-09-24 21:46
+# 작성: 2026-09-24 21:46 (수정: 2026-09-24 22:30 재내보내기 실패 메시지에 되돌리는 방법 추가)
 """태스크 2 검사: 가중치.bin과 가중치정보.json이 서로 맞고, 다시 내보내도 같은 파일이 나오며, 변환 오차가 1e-4 미만인지 확인합니다."""
 
 import json
@@ -57,7 +57,8 @@ def 다시_내보내기_확인():
     차이 = float(re.search(r"최대 차이: ([0-9.e+-]+)", 출력).group(1))
     assert 차이 < 1e-4, f"변환 오차 {차이}"
     바뀜 = subprocess.run(["git", "diff", "--quiet", "--", "web_version/가중치.bin", "web_version/가중치정보.json"], cwd=루트)
-    assert 바뀜.returncode == 0, "다시 내보낸 파일이 커밋된 파일과 다릅니다"
+    assert 바뀜.returncode == 0, ("다시 내보낸 파일이 커밋된 파일과 다릅니다 "
+                                "(의도한 재학습이 아니면 git checkout -- web_version/가중치.bin web_version/가중치정보.json 으로 되돌리세요)")
     print(f"통과: 변환 오차 {차이:.1e}, 다시 내보내도 같은 파일")
 
 
