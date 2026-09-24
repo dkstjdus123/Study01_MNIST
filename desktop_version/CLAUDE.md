@@ -1,0 +1,27 @@
+<!-- 작성: 2026-09-24 18:31 -->
+# CLAUDE.md (desktop_version)
+
+PyTorch로 MNIST CNN을 학습하고, tkinter 그림판에서 마우스로 쓴 숫자를 실시간으로 인식하는 데스크톱 버전입니다. 저장소 전체 규칙(한글 코드·주석, 작성 시각 주석)은 루트 `CLAUDE.md`를 따릅니다.
+
+## 명령어
+
+환경: Windows, Python 3.13, PyTorch CPU 버전 (`torch`, `torchvision`, `pillow`, `numpy`). 린트 설정은 없습니다. 모든 스크립트는 `__file__` 기준 경로를 쓰므로 어느 폴더에서 실행해도 됩니다.
+
+```bash
+python train.py              # MNIST 다운로드(./data) 후 5에폭 학습, 최고 정확도일 때 mnist_cnn.pt 저장 (CPU에서 10분 이상)
+python app.py                # 그림판 GUI 실행 (mnist_cnn.pt 필요)
+python export_web_weights.py # mnist_cnn.pt → ../web_version/mnist_weights.bin/json 과 ../web_version/tests/reference.json
+```
+
+- 콘솔에 한글이 깨지거나 인코딩 오류가 나면 `PYTHONIOENCODING=utf-8`을 설정합니다.
+- `train.py`는 오래 걸리므로 백그라운드로 실행합니다.
+- **재학습하면 반드시 `export_web_weights.py`를 다시 실행**해야 웹 버전에 반영됩니다. 이 스크립트는 배치정규화를 바로 앞 합성곱에 합쳐서 내보내므로, 웹 쪽은 합성곱·ReLU·최대풀링·완전연결만 구현합니다.
+- `python make_shortcut.py`: `app_icon.ico`를 만들고 바탕 화면에 `손글씨 숫자 인식기.lnk`를 생성합니다 (`pywin32` 필요). 바로가기는 `.py` 연결과 무관하게 `sys.executable` 옆의 `pythonw.exe`로 `app.py`를 실행합니다. `app.py`의 `앱ID`(AppUserModelID)를 가져와 바로가기에 넣으므로, 작업 표시줄 고정 시 실행 창과 묶이려면 두 값이 같아야 합니다. 폴더를 옮기면(이번 `desktop_version/` 이동 포함) 다시 실행해야 합니다.
+- `app.py`는 탐색기 더블클릭 실행도 지원합니다 (`.py`는 Microsoft Store Python 3.13에 연결됨). 그래서 가중치는 `__file__` 기준 절대 경로로 찾고, 오류는 `print` 대신 대화상자(`오류창_띄우기`)로 보여 주며, 더블클릭으로 생긴 콘솔 창은 `콘솔창_숨기기`가 숨깁니다. 이 동작을 깨지 않도록 유지합니다.
+
+## 구조
+
+- `model.py`의 `숫자인식CNN`을 `train.py`(학습), `app.py`(추론), `export_web_weights.py`(웹 변환)가 함께 사용합니다. 모델 구조를 바꾸면 `state_dict` 키가 달라져 기존 `mnist_cnn.pt`를 불러올 수 없으므로 다시 학습해야 하고, `export_web_weights.py`의 `텐서목록_만들기()`와 `../web_version/inference.js`의 `추론()`도 함께 고쳐야 합니다.
+- 정규화 상수(`평균=0.1307`, `표준편차=0.3081`)는 `train.py`, `app.py`, `../web_version/preprocess.js`에 **각각 따로** 정의되어 있으므로 반드시 같게 유지해야 합니다.
+- `app.py`의 `전처리()`가 인식률을 좌우합니다. 그린 그림을 MNIST 형식에 맞춰 변환합니다: 글씨 영역을 잘라내고 → 비율을 유지하며 긴 변을 20px로 맞추고(LANCZOS) → 28x28 가운데에 배치한 뒤 → 무게중심을 (14, 14)로 옮기고 → 정규화합니다. 그림판은 검은 배경에 흰 글씨(MNIST와 같은 극성)이며, 화면 캔버스와 PIL 이미지에 동시에 그립니다. 이 함수를 고치면 `../web_version/preprocess.js`도 똑같이 고쳐야 합니다.
+- 앱 경로 검증 방법: MNIST 테스트 이미지를 280x280으로 키워 `전처리()` → 모델에 넣고 정확도를 확인합니다 (이전 측정값 497/500, 웹 버전도 같은 값).
