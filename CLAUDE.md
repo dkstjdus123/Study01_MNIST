@@ -1,42 +1,25 @@
-<!-- 작성: 2026-09-24 19:25 (두 버전 안내 + 공통 규칙으로 다시 씀) -->
+<!-- 작성: 2026-09-24 19:25 (수정: 2026-09-24 19:40 두 버전 관계와 공통 규칙만 남김) -->
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 프로젝트 개요
+## 두 버전의 관계
 
-MNIST로 학습한 CNN으로 마우스(또는 터치)로 쓴 손글씨 숫자를 인식하는 학습용 프로젝트입니다. 같은 모델을 두 버전으로 나란히 둡니다.
+MNIST로 학습한 CNN 하나로 손글씨 숫자를 인식하는 프로그램을 두 버전으로 나란히 둡니다.
 
-| 폴더 | 내용 | 자세한 안내 |
-|---|---|---|
-| `desktop_version/` | PyTorch 학습 + tkinter 그림판 앱 (Windows), 웹용 가중치 내보내기·검증 데이터 스크립트 | `desktop_version/CLAUDE.md` |
-| `web_version/` | 외부 라이브러리 없이 순수 자바스크립트로 추론하는 웹 앱 (GitHub Pages 정적 배포) | `web_version/CLAUDE.md` |
-
-- 루트 `index.html`: GitHub Pages(`main` 브랜치 루트)로 들어온 방문자를 `web_version/`으로 이동시킵니다. 배포 주소: https://dkstjdus123.github.io/Study01_MNIST/
-- `CLAUDE_전역.md`: 전역 CLAUDE.md 사본 (과제 제출물이므로 지우지 않습니다).
+- `desktop_version/`: **원본**. PyTorch로 학습하고 tkinter 그림판 앱으로 인식합니다. 웹 버전에 필요한 가중치와 검증 데이터도 여기서 만듭니다. → `desktop_version/CLAUDE.md`
+- `web_version/`: **이식본**. 데스크톱 버전이 내보낸 가중치로, 외부 라이브러리 없이 순수 자바스크립트로 추론합니다. GitHub Pages에 정적으로 배포합니다. → `web_version/CLAUDE.md`
+- 흐름: `train.py`(학습) → `mnist_cnn.pt` → `가중치내보내기.py` → `web_version/가중치.bin` + `가중치정보.json` → 웹에서 추론. 모델이나 전처리를 바꾸면 항상 데스크톱 쪽을 먼저 고치고 웹을 따라 맞춥니다.
+- 루트 `index.html`은 GitHub Pages 주소(https://dkstjdus123.github.io/Study01_MNIST/)로 들어온 방문자를 `web_version/`으로 보냅니다.
 
 ## 공통 규칙
 
-- **모든 코드와 주석은 한글로 작성합니다.** 변수·함수·클래스 이름도 한글 식별자를 사용합니다 (예: `숫자인식CNN`, `전처리`, `모델_불러오기`).
-- 새로 만드는 파일은 맨 위에 작성 시각을 주석으로 적습니다 (`CLAUDE_전역.md` 참고).
-- 학습된 가중치 파일 이름은 `desktop_version/mnist_cnn.pt`로 고정입니다.
-- 파일을 옮길 때는 `git mv`를 써서 커밋 이력을 유지합니다.
-- 페이지 맨 위 "학번 2601953 이름 안서연" 표시줄(`web_version/index.html`, `web_version/검증.html`, 루트 `index.html`)은 과제 요구사항이므로 지우지 않습니다.
+- **한글 식별자**: 모든 코드와 주석은 한글로 작성하고, 변수·함수·클래스 이름도 한글로 짓습니다 (예: `숫자인식CNN`, `전처리`, `모델_불러오기`).
+- **전처리 3단계**: 그린 그림은 두 버전 모두 같은 순서로 MNIST 형식에 맞춥니다.
+  1. 여백 제거: 글씨가 있는 영역만 잘라냅니다.
+  2. 20x20 비율 유지 축소: 긴 변을 20px로 맞춰(LANCZOS) 28x28 가운데에 놓습니다.
+  3. 무게중심 정렬: 밝기 무게중심을 (14, 14)로 옮긴 뒤 정규화(평균 0.1307, 표준편차 0.3081)합니다.
 
-## 두 버전을 함께 맞춰야 하는 것
-
-- **전처리**: `desktop_version/app.py`의 `전처리()`와 `web_version/전처리.js`는 같은 과정(글씨 영역 자르기 → 긴 변 20px LANCZOS 축소 → 28x28 가운데 배치 → 무게중심 (14, 14) → 정규화)입니다. 한쪽을 고치면 다른 쪽도 고치고 `검증.html`로 확인합니다.
-- **정규화 상수**(`평균=0.1307`, `표준편차=0.3081`): `train.py`와 `app.py`에 각각 정의되어 있으므로 같게 유지합니다. 웹은 `가중치내보내기.py`가 `app.py`에서 읽어 `가중치정보.json`에 넣은 값을 쓰므로 자바스크립트에는 적지 않습니다.
-- **모델 구조**(`desktop_version/model.py`)를 바꾸면: 재학습 → `가중치내보내기.py` 다시 실행, 필요하면 `web_version/모델.js`의 층 계산도 맞춥니다.
-
-## 명령어
-
-환경: Windows, Python 3.13, PyTorch CPU 버전. 테스트·린트 설정은 없습니다.
-
-```bash
-python desktop_version/train.py              # 학습 → desktop_version/mnist_cnn.pt (오래 걸리므로 백그라운드로)
-python desktop_version/app.py                # 데스크톱 그림판 앱
-python desktop_version/가중치내보내기.py      # web_version/가중치.bin + 가중치정보.json (재학습 후 반드시 실행)
-python desktop_version/검증데이터만들기.py    # web_version/검증데이터.* (저장소에 올리지 않음)
-python -m http.server 8000                   # 저장소 루트에서 → http://localhost:8000/ (웹 앱), /web_version/검증.html (검증)
-```
+  한쪽(`desktop_version/app.py`의 `전처리()` 또는 `web_version/전처리.js`)을 고치면 다른 쪽도 고치고 `web_version/검증.html`로 확인합니다.
+- 페이지 맨 위 "학번 2601953 이름 안서연" 표시줄은 과제 요구사항이므로 지우지 않습니다.
+- `CLAUDE_전역.md`(전역 CLAUDE.md 사본)는 과제 제출물이므로 지우지 않습니다.
