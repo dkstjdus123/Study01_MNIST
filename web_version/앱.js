@@ -1,4 +1,4 @@
-// 작성: 2026-09-24 19:25
+// 작성: 2026-09-24 19:25 (수정: 2026-09-24 19:37 전개 연산자 제거, 적재 중 그린 그림 인식, file:// 안내)
 // 그림판.js · 전처리.js · 모델.js를 엮어, 붓을 뗄 때마다 숫자를 인식하고 결과(예측·신뢰도·확률 막대)를 보여 줍니다.
 
 (function () {
@@ -10,6 +10,14 @@
   const 신뢰도표시 = document.getElementById("신뢰도");
   const 막대목록 = document.getElementById("막대목록");
   let 불러온모델 = null;
+  let 그린것있음 = false;   // 모델을 불러오는 동안 그린 그림도 불러온 뒤 인식하기 위해 기억합니다.
+
+  // 가장 큰 값의 위치 (Math.max(...배열)은 배열이 크면 스택이 넘칠 수 있어 반복문으로 찾습니다)
+  function 최대위치(배열) {
+    let 위치 = 0;
+    for (let i = 1; i < 배열.length; i++) if (배열[i] > 배열[위치]) 위치 = i;
+    return 위치;
+  }
 
   // 0~9 확률 막대를 만듭니다.
   const 막대들 = [], 퍼센트들 = [];
@@ -23,7 +31,7 @@
   }
 
   function 막대_갱신(확률) {
-    const 최대 = 확률.some(p => p > 0) ? 확률.indexOf(Math.max(...확률)) : -1;
+    const 최대 = 확률.some(p => p > 0) ? 최대위치(확률) : -1;
     확률.forEach((p, 숫자) => {
       막대들[숫자].style.width = `${p * 100}%`;
       막대들[숫자].classList.toggle("최대", 숫자 === 최대);
@@ -33,18 +41,19 @@
 
   // 점수(로짓)를 소프트맥스로 확률로 바꿉니다.
   function 소프트맥스(점수) {
-    const 최대점수 = Math.max(...점수);
+    const 최대점수 = 점수[최대위치(점수)];
     const 지수 = 점수.map(s => Math.exp(s - 최대점수));
     const 합 = 지수.reduce((a, b) => a + b, 0);
     return 지수.map(v => v / 합);
   }
 
   function 인식하기() {
+    그린것있음 = true;
     if (!불러온모델) return;
     const 입력 = 전처리.전처리하기(판.픽셀가져오기(), 판.가로, 판.세로, 불러온모델.평균, 불러온모델.표준편차);
     if (!입력) return;
     const 확률 = 소프트맥스(Array.from(불러온모델.추론(입력)));
-    const 예측 = 확률.indexOf(Math.max(...확률));
+    const 예측 = 최대위치(확률);
     예측표시.textContent = 예측;
     신뢰도표시.textContent = `신뢰도: ${(확률[예측] * 100).toFixed(1)}%`;
     막대_갱신(확률);
@@ -52,6 +61,7 @@
 
   function 초기화() {
     판.지우기();
+    그린것있음 = false;
     예측표시.textContent = "?";
     if (불러온모델) 신뢰도표시.textContent = "숫자를 그려 보세요";
     막대_갱신(new Array(10).fill(0));
@@ -62,6 +72,15 @@
   초기화();
 
   모델.모델_불러오기()
-    .then(m => { 불러온모델 = m; 신뢰도표시.textContent = "숫자를 그려 보세요"; })
-    .catch(e => { 신뢰도표시.textContent = "모델을 불러오지 못했습니다: " + e.message; });
+    .then(m => {
+      불러온모델 = m;
+      신뢰도표시.textContent = "숫자를 그려 보세요";
+      if (그린것있음) 인식하기();
+    })
+    .catch(e => {
+      // file://로 열면 브라우저가 fetch를 막으므로 로컬 서버로 여는 방법을 알려 줍니다.
+      신뢰도표시.textContent = location.protocol === "file:"
+        ? "파일을 직접 열면 모델을 불러올 수 없습니다. 저장소 폴더에서 python -m http.server 8000 을 실행한 뒤 http://localhost:8000/ 으로 여세요."
+        : "모델을 불러오지 못했습니다: " + e.message;
+    });
 })();

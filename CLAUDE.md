@@ -1,4 +1,4 @@
-<!-- 작성: 2026-09-24 19:25 (수정: 2026-09-24 19:40 두 버전 관계와 공통 규칙만 남김) -->
+<!-- 작성: 2026-09-24 19:25 (수정: 2026-09-24 19:39 두 버전 관계와 공통 규칙만 남김) -->
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -10,6 +10,7 @@ MNIST로 학습한 CNN 하나로 손글씨 숫자를 인식하는 프로그램�
 - `desktop_version/`: **원본**. PyTorch로 학습하고 tkinter 그림판 앱으로 인식합니다. 웹 버전에 필요한 가중치와 검증 데이터도 여기서 만듭니다. → `desktop_version/CLAUDE.md`
 - `web_version/`: **이식본**. 데스크톱 버전이 내보낸 가중치로, 외부 라이브러리 없이 순수 자바스크립트로 추론합니다. GitHub Pages에 정적으로 배포합니다. → `web_version/CLAUDE.md`
 - 흐름: `train.py`(학습) → `mnist_cnn.pt` → `가중치내보내기.py` → `web_version/가중치.bin` + `가중치정보.json` → 웹에서 추론. 모델이나 전처리를 바꾸면 항상 데스크톱 쪽을 먼저 고치고 웹을 따라 맞춥니다.
+- 설계 문서와 구현 계획서: `docs/superpowers/specs/`, `docs/superpowers/plans/`
 - 루트 `index.html`은 GitHub Pages 주소(https://dkstjdus123.github.io/Study01_MNIST/)로 들어온 방문자를 `web_version/`으로 보냅니다.
 
 ## 공통 규칙
