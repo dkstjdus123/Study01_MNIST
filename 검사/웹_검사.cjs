@@ -1,4 +1,4 @@
-// 작성: 2026-09-24 21:56
+// 작성: 2026-09-24 21:56 (수정: 2026-09-24 22:00 서버 정리 보강)
 // 태스크 4~6 검사: 로컬 서버를 켜고 실제 Chromium으로 검증.html과 웹 앱 화면을 확인합니다.
 // 실행 (저장소 루트): NODE_PATH="$(npm root -g)" node 검사/웹_검사.cjs [순전파|전처리|화면]  (인자가 없으면 전부)
 "use strict";
@@ -43,11 +43,12 @@ const 검사목록 = { 순전파: 순전파_검사 };   // 태스크 5, 6에서 
 (async () => {
   const 고른것 = process.argv[2];
   const 서버 = await 서버_켜기();
-  const 브라우저 = await chromium.launch();
+  let 브라우저;
   try {
+    브라우저 = await chromium.launch();
     for (const [이름, 검사] of Object.entries(검사목록)) if (!고른것 || 고른것 === 이름) await 검사(브라우저);
   } finally {
-    await 브라우저.close();
+    if (브라우저) await 브라우저.close().catch(() => {});
     서버.kill();
   }
 })().catch(e => { console.error(e.message); process.exit(1); });
