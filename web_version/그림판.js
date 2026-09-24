@@ -1,4 +1,4 @@
-// 작성: 2026-09-24 19:25
+// 작성: 2026-09-24 19:25 (수정: 2026-09-24 20:14 두 번째 손가락, 오른쪽 버튼 무시)
 // 캔버스 그리기 (마우스 + 터치): 검은 배경에 흰 글씨로 그립니다 (MNIST와 같은 극성, app.py 그림판과 같은 방식).
 
 (function (전역) {
@@ -12,7 +12,7 @@
   function 그림판_만들기(캔버스, 설정) {
     const 붓 = 캔버스.getContext("2d", { willReadFrequently: true });
     const 펜두께 = 설정.펜두께;
-    let 그리는중 = false, 이전좌표 = null;
+    let 그리는포인터 = null, 이전좌표 = null;   // 지금 그리고 있는 포인터(손가락, 마우스)의 번호
 
     function 지우기() {
       붓.fillStyle = "#000";
@@ -37,17 +37,22 @@
       이전좌표 = 좌표;
     }
 
-    function 붓떼기() {
-      if (!그리는중) return;
-      그리는중 = false; 이전좌표 = null;
+    function 붓떼기(e) {
+      if (e.pointerId !== 그리는포인터) return;
+      그리는포인터 = null; 이전좌표 = null;
       if (설정.다그렸을때) 설정.다그렸을때();
     }
 
     // 포인터 이벤트 하나로 마우스·터치·펜을 모두 처리합니다.
     캔버스.addEventListener("pointerdown", e => {
-      그리는중 = true; 캔버스.setPointerCapture(e.pointerId); 선긋기(캔버스좌표(e));
+      // 마우스 왼쪽 버튼(터치, 펜은 0)만 그립니다. 이미 그리는 중이면 두 번째 손가락은 무시합니다.
+      // 무시하지 않으면 두 손가락 사이에 선이 그어집니다.
+      if (e.button !== 0 || 그리는포인터 !== null) return;
+      e.preventDefault();
+      그리는포인터 = e.pointerId; 캔버스.setPointerCapture(e.pointerId); 선긋기(캔버스좌표(e));
     });
-    캔버스.addEventListener("pointermove", e => { if (그리는중) 선긋기(캔버스좌표(e)); });
+    캔버스.addEventListener("pointermove", e => { if (e.pointerId === 그리는포인터) 선긋기(캔버스좌표(e)); });
+    캔버스.addEventListener("contextmenu", e => e.preventDefault());   // 오른쪽 클릭 메뉴가 그림판을 가리지 않게
     캔버스.addEventListener("pointerup", 붓떼기);
     캔버스.addEventListener("pointercancel", 붓떼기);
 
