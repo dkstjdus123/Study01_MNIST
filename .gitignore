@@ -4,3 +4,7 @@ data/
 # 파이썬 캐시
 __pycache__/
 *.pyc
+
+# 웹 버전 검증 데이터 (python desktop_version/검증데이터만들기.py 로 언제든 다시 만듦, 약 16MB)
+web_version/검증데이터.json
+web_version/검증데이터.bin

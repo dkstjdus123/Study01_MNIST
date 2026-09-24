@@ -1,15 +1,16 @@
-// 작성: 2026-09-24 19:20
-// 외부 라이브러리 없이 순수 자바스크립트로 숫자인식CNN을 계산하는 추론 엔진입니다.
-// 가중치는 desktop_version/export_web.py가 만든 model_weights.json(구조) + model_weights.bin(float32 값)을 씁니다.
-// 배치정규화는 변환할 때 합성곱에 미리 합쳐 두었으므로 여기서는 합성곱·ReLU·최대풀링·완전연결만 계산합니다.
+// 작성: 2026-09-24 19:20 (수정: 2026-09-24 19:25 가중치.bin/가중치정보.json 형식, 파일 이름 변경)
+// 가중치 적재 + 순전파: 외부 라이브러리 없이 순수 자바스크립트로 숫자인식CNN을 계산합니다.
+// 가중치는 desktop_version/가중치내보내기.py가 만든 가중치정보.json(층 구조·형상·정규화 상수) + 가중치.bin(float32 값)을 씁니다.
+// 배치정규화는 내보낼 때 합성곱에 미리 합쳤고, 드롭아웃은 추론 때 항등이므로
+// 여기서는 합성곱(3x3, 패딩 1)·ReLU·2x2 최대풀링·전결합만 계산합니다.
 
 (function (전역) {
   "use strict";
 
   // 3x3 합성곱 (패딩 1, 보폭 1): [입력채널][높이][너비] → [출력채널][높이][너비]
   function 합성곱(입력, 채널, 높이, 너비, 층) {
-    const [출력채널, 입력채널] = 층.가중치모양;
-    if (입력채널 !== 채널) throw new Error(`합성곱 입력 채널이 맞지 않습니다: ${채널} ≠ ${입력채널}`);
+    const [출력채널, 입력채널] = 층.가중치형상;
+    if (입력채널 !== 채널) throw new Error(`${층.이름}: 입력 채널이 맞지 않습니다 (${채널} ≠ ${입력채널})`);
     const 면적 = 높이 * 너비;
     const 출력 = new Float32Array(출력채널 * 면적);
     const W = 층.가중치, B = 층.편향;
@@ -56,10 +57,10 @@
     return [출력, 채널, 새높이, 새너비];
   }
 
-  // 완전연결: 출력 = 가중치 · 입력 + 편향 (입력은 PyTorch Flatten과 같은 [채널][높이][너비] 순서)
-  function 완전연결(입력, 층) {
-    const [출력수, 입력수] = 층.가중치모양;
-    if (입력.length !== 입력수) throw new Error(`완전연결 입력 크기가 맞지 않습니다: ${입력.length} ≠ ${입력수}`);
+  // 전결합: 출력 = 가중치 · 입력 + 편향 (입력은 PyTorch Flatten과 같은 [채널][높이][너비] 순서)
+  function 전결합(입력, 층) {
+    const [출력수, 입력수] = 층.가중치형상;
+    if (입력.length !== 입력수) throw new Error(`${층.이름}: 입력 크기가 맞지 않습니다 (${입력.length} ≠ ${입력수})`);
     const 출력 = new Float32Array(출력수);
     for (let o = 0; o < 출력수; o++) {
       let 합 = 층.편향[o];
@@ -70,38 +71,45 @@
     return 출력;
   }
 
-  /** 구조 정보(JSON)와 가중치 바이너리(ArrayBuffer)로 모델을 만듭니다. */
+  /** 가중치정보(JSON 객체)와 가중치 바이너리(ArrayBuffer)로 모델을 만듭니다. */
   function 모델_만들기(정보, 바이너리) {
-    const 값 = (조각) => new Float32Array(바이너리, 조각.offset * 4, 조각.length);
-    const 층들 = 정보.layers.map(층 => 층.weight
-      ? { 종류: 층.type, 가중치: 값(층.weight), 가중치모양: 층.weight.shape, 편향: 값(층.bias) }
-      : { 종류: 층.type });
+    const 값 = (조각) => new Float32Array(바이너리, 조각.오프셋 * 4, 조각.개수);
+    const 층들 = 정보.층.map(층 => 층.가중치
+      ? { 종류: 층.종류, 이름: 층.이름, 가중치: 값(층.가중치), 가중치형상: 층.가중치.형상, 편향: 값(층.편향) }
+      : { 종류: 층.종류, 이름: 층.이름 });
 
-    /** 정규화된 28x28 입력(Float32Array 784개)을 받아 10개 숫자의 점수(로짓)를 돌려줍니다. */
+    /** 정규화된 28x28 입력(784개)을 받아 0~9 각 숫자의 점수(로짓) 10개를 돌려줍니다. */
     function 추론(입력) {
       let x = Float32Array.from(입력), 채널 = 1, 높이 = 28, 너비 = 28;
       for (const 층 of 층들) {
         if (층.종류 === "conv") [x, 채널, 높이, 너비] = 합성곱(x, 채널, 높이, 너비, 층);
         else if (층.종류 === "relu") x = 렐루(x);
         else if (층.종류 === "maxpool") [x, 채널, 높이, 너비] = 최대풀링(x, 채널, 높이, 너비);
-        else if (층.종류 === "linear") x = 완전연결(x, 층);
-        else throw new Error("알 수 없는 층: " + 층.종류);
+        else if (층.종류 === "linear") x = 전결합(x, 층);
+        else throw new Error("알 수 없는 층 종류: " + 층.종류);
       }
       return x;
     }
-    return { 추론 };
+    // 정규화 상수는 파이썬이 내보낸 값을 그대로 씁니다 (자바스크립트에 따로 적지 않음).
+    return { 추론, 평균: 정보.평균, 표준편차: 정보.표준편차 };
   }
 
-  /** 웹 페이지에서 같은 폴더의 가중치 파일을 내려받아 모델을 만듭니다. */
+  async function 파일받기(경로, 형식) {
+    const 응답 = await fetch(경로);
+    if (!응답.ok) throw new Error(`${경로}를 내려받지 못했습니다 (${응답.status})`);
+    return 형식 === "json" ? 응답.json() : 응답.arrayBuffer();
+  }
+
+  /** 같은 폴더의 가중치정보.json + 가중치.bin을 내려받아 모델을 만듭니다. */
   async function 모델_불러오기(폴더 = "") {
     const [정보, 바이너리] = await Promise.all([
-      fetch(폴더 + "model_weights.json").then(r => { if (!r.ok) throw new Error("model_weights.json " + r.status); return r.json(); }),
-      fetch(폴더 + "model_weights.bin").then(r => { if (!r.ok) throw new Error("model_weights.bin " + r.status); return r.arrayBuffer(); }),
+      파일받기(폴더 + "가중치정보.json", "json"),
+      파일받기(폴더 + "가중치.bin", "bin"),
     ]);
     return 모델_만들기(정보, 바이너리);
   }
 
   const 내보내기 = { 모델_만들기, 모델_불러오기 };
   if (typeof module !== "undefined" && module.exports) module.exports = 내보내기;   // Node.js 검증용
-  else 전역.숫자인식CNN = 내보내기;
+  else 전역.모델 = 내보내기;
 })(typeof window !== "undefined" ? window : globalThis);
