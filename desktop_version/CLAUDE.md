@@ -1,4 +1,4 @@
-<!-- 작성: 2026-09-24 18:44 -->
+<!-- 작성: 2026-09-24 18:44 (수정: 2026-09-24 19:20 ONNX 대신 export_web.py) -->
 # CLAUDE.md (desktop_version)
 
 PyTorch로 MNIST CNN을 학습하고, tkinter 그림판에서 손글씨 숫자를 인식하는 데스크톱 버전입니다. 루트 `CLAUDE.md`의 규칙(한글 코드·주석, 한글 식별자, 가중치 파일 이름 `mnist_cnn.pt` 고정)을 그대로 따릅니다.
@@ -10,7 +10,7 @@ PyTorch로 MNIST CNN을 학습하고, tkinter 그림판에서 손글씨 숫자�
 ```bash
 python desktop_version/train.py        # MNIST 다운로드(desktop_version/data) 후 5에폭 학습, 최고 정확도일 때 mnist_cnn.pt 저장 (CPU에서 10분 이상, 백그라운드로 실행)
 python desktop_version/app.py          # 그림판 GUI 실행 (mnist_cnn.pt 필요)
-python desktop_version/export_onnx.py  # mnist_cnn.pt → web_version/mnist_cnn.onnx 변환 (재학습 후 반드시 실행)
+python desktop_version/export_web.py   # mnist_cnn.pt → web_version/model_weights.json/.bin 변환 (재학습 후 반드시 실행)
 python desktop_version/make_shortcut.py  # app_icon.ico 생성 + 바탕 화면 바로가기 (pywin32 필요)
 ```
 
@@ -20,7 +20,7 @@ python desktop_version/make_shortcut.py  # app_icon.ico 생성 + 바탕 화면 �
 
 ## 구조
 
-- `model.py`의 `숫자인식CNN`을 `train.py`(학습), `app.py`(추론), `export_onnx.py`(변환)가 함께 사용합니다. 모델 구조를 바꾸면 기존 `mnist_cnn.pt`를 불러올 수 없으므로 다시 학습해야 합니다.
+- `model.py`의 `숫자인식CNN`을 `train.py`(학습), `app.py`(추론), `export_web.py`(웹용 변환)가 함께 사용합니다. 모델 구조를 바꾸면 기존 `mnist_cnn.pt`를 불러올 수 없으므로 다시 학습해야 하고, `export_web.py`와 `web_version/cnn.js`의 층 처리도 함께 맞춰야 합니다.
 - 정규화 상수(`평균=0.1307`, `표준편차=0.3081`)는 `train.py`와 `app.py`에 **각각 따로** 정의되어 있으므로 반드시 같게 유지합니다.
 - `app.py`의 `전처리()`가 인식률을 좌우합니다: 글씨 영역 자르기 → 긴 변 20px → 28x28 가운데 배치 → 무게중심 (14, 14) → 정규화. 그림판은 검은 배경에 흰 글씨입니다. `web_version/index.html`에 같은 과정이 JavaScript로 구현되어 있으므로 함께 맞춥니다.
 - 검증 방법: MNIST 테스트 이미지를 280x280으로 키워 `전처리()` → 모델에 넣고 정확도를 확인합니다 (이전 측정값 497/500).

@@ -13,8 +13,8 @@ PyTorch로 MNIST CNN을 학습하고, tkinter 그림판에서 마우스로 쓴 �
 
 ## 폴더 구조
 
-- `desktop_version/`: PyTorch 학습(`train.py`), tkinter 그림판 앱(`app.py`), 모델(`model.py`), 가중치(`mnist_cnn.pt`), ONNX 변환(`export_onnx.py`), 바로가기 생성(`make_shortcut.py`). 자세한 내용은 `desktop_version/CLAUDE.md`.
-- `web_version/`: 브라우저용 웹 앱(`index.html`)과 모델(`mnist_cnn.onnx`). 자세한 내용은 `web_version/CLAUDE.md`.
+- `desktop_version/`: PyTorch 학습(`train.py`), tkinter 그림판 앱(`app.py`), 모델(`model.py`), 가중치(`mnist_cnn.pt`), 웹용 가중치 변환(`export_web.py`), 바로가기 생성(`make_shortcut.py`). 자세한 내용은 `desktop_version/CLAUDE.md`.
+- `web_version/`: 브라우저용 웹 앱. 외부 라이브러리 없이 순수 자바스크립트(`cnn.js`)로 추론하며 가중치는 `model_weights.json`/`.bin`. 자세한 내용은 `web_version/CLAUDE.md`.
 - 루트 `index.html`: GitHub Pages(`main` 브랜치 루트)로 들어온 방문자를 `web_version/`으로 이동시킵니다. 배포 주소: https://dkstjdus123.github.io/Study01_MNIST/
 - `CLAUDE_전역.md`: 전역 CLAUDE.md 사본 (과제 제출물이므로 지우지 않습니다).
 
@@ -25,7 +25,7 @@ PyTorch로 MNIST CNN을 학습하고, tkinter 그림판에서 마우스로 쓴 �
 ```bash
 python desktop_version/train.py        # 학습 → desktop_version/mnist_cnn.pt (오래 걸리므로 백그라운드로)
 python desktop_version/app.py          # 그림판 GUI
-python desktop_version/export_onnx.py  # web_version/mnist_cnn.onnx 생성 (재학습 후 반드시 실행)
+python desktop_version/export_web.py   # web_version/model_weights.json/.bin 생성 (재학습 후 반드시 실행)
 ```
 
 ## 함께 맞춰야 하는 것

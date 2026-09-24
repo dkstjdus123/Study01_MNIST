@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- 작성: 2026-09-22 02:12 -->
+<!-- 작성: 2026-09-24 19:20 -->
+<!-- 외부 라이브러리 없이 순수 자바스크립트(cnn.js)로 추론하는 손글씨 숫자 인식 웹 페이지. GitHub Pages에 정적 파일로 올립니다. -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -61,7 +62,7 @@
 
   <main>
     <h1>손글씨 숫자 인식기</h1>
-    <p class="설명">검은 칸에 0~9 숫자를 그리면 PyTorch로 학습한 CNN이 브라우저 안에서 바로 인식합니다.</p>
+    <p class="설명">검은 칸에 0~9 숫자를 그리면 PyTorch로 학습한 CNN을 외부 라이브러리 없이 순수 자바스크립트로 계산해 브라우저 안에서 바로 인식합니다.</p>
 
     <div class="본문">
       <section class="카드 그림판영역">
@@ -76,7 +77,8 @@
     </div>
   </main>
 
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/ort.min.js"></script>
+<!-- 순수 자바스크립트 CNN 추론 엔진 (가중치: model_weights.json + model_weights.bin) -->
+<script src="cnn.js"></script>
 <script>
   // ===== 설정 (app.py와 같은 값) =====
   const 펜두께 = 18;
@@ -87,7 +89,7 @@
   const 예측표시 = document.getElementById("예측");
   const 신뢰도표시 = document.getElementById("신뢰도");
   const 막대목록 = document.getElementById("막대목록");
-  let 세션 = null;
+  let 모델 = null;
   let 그리는중 = false, 이전좌표 = null;
 
   // 0~9 확률 막대를 만듭니다.
@@ -106,7 +108,7 @@
     붓.fillStyle = "#000";
     붓.fillRect(0, 0, 그림판.width, 그림판.height);
     예측표시.textContent = "?";
-    if (세션) 신뢰도표시.textContent = "숫자를 그려 보세요";
+    if (모델) 신뢰도표시.textContent = "숫자를 그려 보세요";
     막대_갱신(new Array(10).fill(0));
   }
 
@@ -183,12 +185,11 @@
     return 입력;
   }
 
-  async function 인식하기() {
-    if (!세션) return;
+  function 인식하기() {
+    if (!모델) return;
     const 입력 = 전처리();
     if (!입력) return;
-    const 결과 = await 세션.run({ input: new ort.Tensor("float32", 입력, [1, 1, 28, 28]) });
-    const 점수 = Array.from(결과.logits.data);
+    const 점수 = Array.from(모델.추론(입력));
     // 소프트맥스로 확률을 계산합니다.
     const 최대점수 = Math.max(...점수);
     const 지수 = 점수.map(s => Math.exp(s - 최대점수));
@@ -211,8 +212,8 @@
 
   // 모델을 불러옵니다.
   지우기();
-  ort.InferenceSession.create("mnist_cnn.onnx")
-    .then(s => { 세션 = s; 신뢰도표시.textContent = "숫자를 그려 보세요"; })
+  숫자인식CNN.모델_불러오기()
+    .then(m => { 모델 = m; 신뢰도표시.textContent = "숫자를 그려 보세요"; })
     .catch(e => { 신뢰도표시.textContent = "모델을 불러오지 못했습니다: " + e.message; });
 </script>
 </body>
