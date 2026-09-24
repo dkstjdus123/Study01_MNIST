@@ -1,4 +1,4 @@
-// 작성: 2026-09-24 21:56 (수정: 2026-09-24 22:00 서버 정리 보강 / 22:03 전처리 검사 추가 / 22:07 화면 검사 추가)
+// 작성: 2026-09-24 21:56 (수정: 2026-09-24 22:00 서버 정리 보강 / 22:03 전처리 검사 추가 / 22:07 화면 검사 추가 / 22:13 루트 이동 검사 보강)
 // 태스크 4~6 검사: 로컬 서버를 켜고 실제 Chromium으로 검증.html과 웹 앱 화면을 확인합니다.
 // 실행 (저장소 루트): NODE_PATH="$(npm root -g)" node 검사/웹_검사.cjs [순전파|전처리|화면]  (인자가 없으면 전부)
 "use strict";
@@ -75,8 +75,8 @@ async function 화면_검사(브라우저) {
   // 루트 주소 → web_version/ 이동
   let 페이지 = await 새_페이지(브라우저);
   await 페이지.goto(`${주소}/`);
-  await 페이지.waitForURL(/\/web_version\/(index\.html)?$/);
-  확인(true, "루트 주소가 web_version/으로 이동");
+  const 이동함 = await 페이지.waitForURL(/\/web_version\/(index\.html)?$/, { timeout: 5000 }).then(() => true, () => false);
+  확인(이동함, "루트 주소가 web_version/으로 이동");
   확인(await 페이지.getByText(학번이름).isVisible(), "맨 위에 학번·이름 표시");
   await 모델준비(페이지);
 
