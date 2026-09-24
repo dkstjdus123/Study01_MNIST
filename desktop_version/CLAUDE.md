@@ -1,4 +1,4 @@
-<!-- 작성: 2026-09-24 18:44 (수정: 2026-09-24 19:39 파일 연결 관계, 가중치 내보내기, 검증 데이터 추가) -->
+<!-- 작성: 2026-09-24 18:44 (수정: 2026-09-24 19:39 파일 연결 관계, 가중치 내보내기, 검증 데이터 추가 / 20:20 train.py 실행 위치) -->
 # CLAUDE.md (desktop_version)
 
 PyTorch로 MNIST CNN을 학습하고, tkinter 그림판에서 마우스로 쓴 손글씨 숫자를 실시간으로 인식하는 데스크톱 버전입니다. 웹 버전에 필요한 가중치·검증 데이터도 여기서 만듭니다. 루트 `CLAUDE.md`의 공통 규칙을 따릅니다.
@@ -8,12 +8,13 @@ PyTorch로 MNIST CNN을 학습하고, tkinter 그림판에서 마우스로 쓴 �
 - Windows, Python 3.13, PyTorch **CPU** 버전 (`torch`, `torchvision`, `pillow`, `numpy`). 테스트·린트 설정은 없습니다.
 - 콘솔에 한글이 깨지거나 인코딩 오류가 나면 `PYTHONIOENCODING=utf-8`을 설정합니다.
 - 학습된 가중치 파일 이름은 `mnist_cnn.pt`로 고정입니다.
-- 모든 스크립트는 `__file__` 기준 경로를 쓰므로 어느 폴더에서 실행해도 됩니다.
+- **`train.py`는 반드시 이 폴더(`desktop_version/`) 안에서 실행합니다.** 저장 경로(`mnist_cnn.pt`)와 데이터 경로(`./data`)가 상대 경로라서, 저장소 루트에서 실행하면 루트에 `data/`와 `mnist_cnn.pt`가 생깁니다. 폴더를 옮길 때 파이썬 코드는 한 글자도 고치지 않기로 했으므로 코드 대신 여기에 적어 둡니다.
+- 나머지 스크립트(`app.py`, `가중치내보내기.py`, `검증데이터만들기.py`, `make_shortcut.py`)는 `__file__` 기준 경로를 쓰므로 어느 폴더에서 실행해도 됩니다.
 
 ## 실행 방식
 
 ```bash
-python desktop_version/train.py              # MNIST 다운로드(desktop_version/data) 후 5에폭 학습, 최고 정확도일 때 mnist_cnn.pt 저장 (CPU에서 10분 이상 → 백그라운드로)
+cd desktop_version; python train.py          # 이 폴더 안에서! MNIST 다운로드(./data) 후 5에폭 학습, 최고 정확도일 때 mnist_cnn.pt 저장 (CPU에서 10분 이상 → 백그라운드로)
 python desktop_version/app.py                # 그림판 GUI (mnist_cnn.pt 필요)
 python desktop_version/가중치내보내기.py      # web_version/가중치.bin + 가중치정보.json (재학습 후 반드시 실행)
 python desktop_version/검증데이터만들기.py    # web_version/검증데이터.json/.bin (장수 인자, 기본 200)
