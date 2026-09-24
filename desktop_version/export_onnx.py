@@ -2,7 +2,7 @@
 # 작성: 2026-09-22 02:10
 """
 학습된 가중치(mnist_cnn.pt)를 웹 브라우저에서 쓸 수 있는 ONNX 형식(mnist_cnn.onnx)으로 변환합니다.
-웹 페이지(index.html)는 onnxruntime-web으로 이 파일을 불러와 추론합니다.
+웹 페이지(../web_version/index.html)는 onnxruntime-web으로 이 파일을 불러와 추론합니다.
 """
 
 import os
@@ -15,7 +15,8 @@ from model import 숫자인식CNN
 
 프로젝트폴더 = os.path.dirname(os.path.abspath(__file__))
 가중치경로 = os.path.join(프로젝트폴더, "mnist_cnn.pt")
-저장경로 = os.path.join(프로젝트폴더, "mnist_cnn.onnx")
+# 웹 페이지가 쓰는 파일이므로 web_version 폴더에 저장합니다.
+저장경로 = os.path.join(os.path.dirname(프로젝트폴더), "web_version", "mnist_cnn.onnx")
 
 
 def main():

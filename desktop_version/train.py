@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """MNIST 데이터셋으로 CNN을 학습하고 가중치를 mnist_cnn.pt로 저장합니다."""
 
+import os
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -13,7 +15,10 @@ from model import 숫자인식CNN
 에폭수 = 5
 배치크기 = 128
 학습률 = 1e-3
-저장경로 = "mnist_cnn.pt"
+# 어느 폴더에서 실행하든 이 파일과 같은 폴더(desktop_version)에 저장하도록 절대 경로로 지정합니다.
+프로젝트폴더 = os.path.dirname(os.path.abspath(__file__))
+저장경로 = os.path.join(프로젝트폴더, "mnist_cnn.pt")
+데이터경로 = os.path.join(프로젝트폴더, "data")
 
 # MNIST 전체 데이터의 평균과 표준편차 (정규화에 사용)
 평균, 표준편차 = 0.1307, 0.3081
@@ -32,8 +37,8 @@ def 데이터로더_만들기():
         transforms.Normalize((평균,), (표준편차,)),
     ])
 
-    학습셋 = datasets.MNIST("./data", train=True, download=True, transform=학습변환)
-    테스트셋 = datasets.MNIST("./data", train=False, download=True, transform=테스트변환)
+    학습셋 = datasets.MNIST(데이터경로, train=True, download=True, transform=학습변환)
+    테스트셋 = datasets.MNIST(데이터경로, train=False, download=True, transform=테스트변환)
 
     학습로더 = DataLoader(학습셋, batch_size=배치크기, shuffle=True)
     테스트로더 = DataLoader(테스트셋, batch_size=1000, shuffle=False)
