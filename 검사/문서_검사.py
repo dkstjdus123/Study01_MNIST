@@ -1,4 +1,4 @@
-# 작성: 2026-09-24 22:16
+# 작성: 2026-09-24 22:16 (수정: 2026-09-24 22:22 check-ignore 경로별 확인)
 """태스크 7 검사: CLAUDE.md 3개가 가리키는 파일이 실제로 있는지(또는 .gitignore로 일부러 뺀 산출물인지) 확인합니다."""
 
 import re
@@ -17,9 +17,9 @@ if __name__ == "__main__":
             후보 = [폴더 / 대상, 루트 / 대상, 루트 / "desktop_version" / 대상, 루트 / "web_version" / 대상]
             if any(p.exists() for p in 후보):
                 continue
-            # .gitignore로 일부러 뺀 산출물(검증 데이터 등)은 없어도 됩니다.
-            무시 = subprocess.run(["git", "check-ignore", "-q", *map(str, 후보)], cwd=루트)
-            if 무시.returncode != 0:
+            # .gitignore로 일부러 뺀 산출물(검증 데이터 등)은 없어도 됩니다. (-q는 경로 하나만 받으므로 하나씩 확인)
+            무시됨 = any(subprocess.run(["git", "check-ignore", "-q", str(p)], cwd=루트).returncode == 0 for p in 후보)
+            if not 무시됨:
                 없음.append(f"{문서} → {이름}")
     assert not 없음, "없는 파일: " + ", ".join(없음)
     print("통과: CLAUDE.md 3개가 가리키는 파일이 모두 있음")
