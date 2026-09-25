@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!-- 작성: 2026-09-25 09:19 -->
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>웹 버전 검증</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 16px; line-height: 1.5; }
+    table { border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #ccc; padding: 2px 8px; text-align: center; }
+    .통과 { color: #2e7d32; font-weight: bold; }
+    .실패 { color: #c62828; font-weight: bold; }
+    tr.불일치 { background: #ffebee; }
+  </style>
+</head>
+<body>
+  <h1>웹 버전 검증 (파이썬과 대조)</h1>
+  <p>desktop_version/검증데이터만들기.py가 만든 그림을 자바스크립트 경로(전처리.js → 모델.js)로 처리해 파이썬 결과와 비교합니다.
+    로컬 서버(저장소 루트에서 <code>python -m http.server 8000</code>)로 열어야 합니다.</p>
+  <div id="요약">검증 중…</div>
+  <h2>표본별 결과</h2>
+  <table>
+    <thead><tr><th>번호</th><th>종류</th><th>정답</th><th>파이썬</th><th>JS</th><th>전처리 차이</th><th>점수 차이</th></tr></thead>
+    <tbody id="표본표"></tbody>
+  </table>
+  <script src="전처리.js"></script>
+  <script src="모델.js"></script>
+  <script>
+  (async function () {
+    "use strict";
+    const 요약 = document.getElementById("요약");
+    const 표본표 = document.getElementById("표본표");
+    const 최대위치 = 배열 => { let 위치 = 0; for (let i = 1; i < 배열.length; i++) if (배열[i] > 배열[위치]) 위치 = i; return 위치; };
+    const 소프트맥스 = 점수 => {
+      const 최대 = 점수[최대위치(점수)];
+      const 지수 = Array.from(점수, v => Math.exp(v - 최대));
+      const 합 = 지수.reduce((a, b) => a + b, 0);
+      return 지수.map(v => v / 합);
+    };
+
+    let 불러온모델, 검증, 그림들;
+    try {
+      불러온모델 = await 모델.모델_불러오기();
+      const [정보응답, 그림응답] = await Promise.all([fetch("검증데이터.json"), fetch("검증데이터.bin")]);
+      if (!정보응답.ok || !그림응답.ok) {
+        throw new Error("검증 데이터가 없습니다. 저장소 루트에서 python desktop_version/검증데이터만들기.py 를 먼저 실행하세요.");
+      }
+      검증 = await 정보응답.json();
+      그림들 = new Uint8Array(await 그림응답.arrayBuffer());
+    } catch (오류) {
+      요약.innerHTML = `<span class="실패">${오류.message}</span>`;
+      return;
+    }
+
+    const 면적 = 검증.가로 * 검증.세로;
+    let 순전파차 = 0, 전처리일치 = 0, 최대전처리차 = 0, 예측일치 = 0, 최대점수차 = 0;
+    let JS맞음 = 0, 파이썬맞음 = 0, MNIST수 = 0, MNIST맞음 = 0, 총시간 = 0;
+    const 줄들 = [];
+    for (let i = 0; i < 검증.장수; i++) {
+      const 종류 = 검증.종류[i], 정답 = 검증.정답[i];
+      const 파이썬입력 = 검증.파이썬입력[i], 파이썬점수 = 검증.파이썬점수[i];
+      const 시작 = performance.now();
+      const 입력 = 전처리.전처리하기(그림들.subarray(i * 면적, (i + 1) * 면적), 검증.가로, 검증.세로,
+                                    불러온모델.평균, 불러온모델.표준편차);
+      const 점수 = 입력 ? 불러온모델.추론(입력) : null;
+      총시간 += performance.now() - 시작;
+
+      // 순전파만 따로 검사: 전처리 차이와 섞이지 않도록 파이썬이 전처리한 같은 입력을 넣습니다.
+      if (파이썬입력) {
+        const JS확률 = 소프트맥스(불러온모델.추론(Float32Array.from(파이썬입력)));
+        const 파이썬확률 = 소프트맥스(파이썬점수);
+        for (let k = 0; k < 10; k++) 순전파차 = Math.max(순전파차, Math.abs(JS확률[k] - 파이썬확률[k]));
+      }
+
+      // 한쪽만 빈 그림(null)이면 불일치입니다.
+      let 전처리차 = 0, 점수차 = 0;
+      if (입력 && 파이썬입력) {
+        for (let k = 0; k < 784; k++) 전처리차 = Math.max(전처리차, Math.abs(입력[k] - 파이썬입력[k]));
+        for (let k = 0; k < 10; k++) 점수차 = Math.max(점수차, Math.abs(점수[k] - 파이썬점수[k]));
+      } else if (입력 || 파이썬입력) {
+        전처리차 = 점수차 = Infinity;
+      }
+      const JS예측 = 점수 ? 최대위치(점수) : "없음";
+      const 파이썬예측 = 파이썬점수 ? 최대위치(파이썬점수) : "없음";
+      if (전처리차 < 1e-4) 전처리일치++;
+      if (JS예측 === 파이썬예측) 예측일치++;
+      if (JS예측 === 정답) JS맞음++;
+      if (파이썬예측 === 정답) 파이썬맞음++;
+      if (종류.startsWith("MNIST")) { MNIST수++; if (JS예측 === 정답) MNIST맞음++; }
+      최대전처리차 = Math.max(최대전처리차, 전처리차);
+      최대점수차 = Math.max(최대점수차, 점수차);
+      const 불일치 = JS예측 !== 파이썬예측 || !(전처리차 < 1e-4);
+      줄들.push(`<tr class="${불일치 ? "불일치" : ""}"><td>${i}</td><td>${종류}</td><td>${정답}</td>` +
+                `<td>${파이썬예측}</td><td>${JS예측}</td><td>${전처리차.toExponential(1)}</td><td>${점수차.toExponential(1)}</td></tr>`);
+    }
+    표본표.innerHTML = 줄들.join("");
+
+    const n = 검증.장수;
+    const MNIST정확도 = MNIST수 ? MNIST맞음 / MNIST수 : 0;
+    const 기준들 = [
+      ["순전파 일치", "같은 28x28 입력에 대한 확률의 최대 절대차 1e-4 이하", 순전파차.toExponential(2), 순전파차 <= 1e-4],
+      ["전처리 일치", "파이썬 전처리 결과와 차이 1e-4 미만인 표본 100%", `${전처리일치}/${n} (최대 ${최대전처리차.toExponential(2)})`, 전처리일치 === n],
+      ["예측 일치", "파이썬과 같은 숫자를 예측한 표본 100%", `${예측일치}/${n}`, 예측일치 === n],
+      ["전체 정확도", "MNIST 표본 중 97% 이상 (그림 → 전처리 → 순전파 전체 경로)", `${(MNIST정확도 * 100).toFixed(1)}% (${MNIST맞음}/${MNIST수})`, MNIST정확도 >= 0.97],
+    ];
+    const 통과 = 기준들.every(기준 => 기준[3]);
+    요약.innerHTML =
+      `<p><span class="${통과 ? "통과" : "실패"}">${통과 ? "통과" : "불일치 있음"}</span> — ${n}장 검증, ` +
+      `정확도 JS ${JS맞음}/${n}, 파이썬 ${파이썬맞음}/${n}, 점수 최대 차이 ${최대점수차.toExponential(2)}, ` +
+      `한 장 평균 ${(총시간 / n).toFixed(1)}ms</p>` +
+      `<table><thead><tr><th>항목</th><th>기준</th><th>실측</th><th>판정</th></tr></thead><tbody>` +
+      기준들.map(([항목, 기준, 실측, 합격]) =>
+        `<tr class="${합격 ? "" : "불일치"}"><td>${항목}</td><td>${기준}</td><td>${실측}</td><td>${합격 ? "통과" : "실패"}</td></tr>`).join("") +
+      `</tbody></table>`;
+  })();
+  </script>
+</body>
+</html>
