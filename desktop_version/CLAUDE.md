@@ -1,4 +1,4 @@
-<!-- 작성: 2026-09-25 09:31 -->
+<!-- 작성: 2026-09-25 09:31 (수정: 2026-09-25 09:51 Microsoft Store Python·콘솔 숨기기 조건 메모 추가) -->
 # CLAUDE.md (desktop_version)
 
 PyTorch로 MNIST CNN을 학습하고, tkinter 그림판에서 마우스로 쓴 숫자를 인식하는 데스크톱 버전입니다. 웹 버전이 쓰는 가중치와 검증 데이터도 여기서 만듭니다. 루트 `CLAUDE.md`의 공통 규칙을 따릅니다.
@@ -6,6 +6,7 @@ PyTorch로 MNIST CNN을 학습하고, tkinter 그림판에서 마우스로 쓴 �
 ## 환경
 
 - Windows, Python 3.13, PyTorch **CPU** (`torch`, `torchvision`, `pillow`, `numpy`). 바로가기에는 `pywin32`가 필요합니다.
+- 학생 PC에서는 `.py` 파일을 더블클릭하면 Microsoft Store Python 3.13으로 열립니다.
 - 콘솔에서 한글이 깨지면 `PYTHONIOENCODING=utf-8`을 설정합니다.
 - 모든 스크립트가 `__file__` 기준 경로를 쓰므로 어느 폴더에서 실행해도 됩니다. MNIST 원본은 `desktop_version/data/`에 내려받습니다 (git 제외).
 
@@ -25,6 +26,7 @@ python desktop_version/검증데이터만들기.py    # web_version/검증데이
 - `app.py`가 중심입니다. `가중치내보내기.py`, `검증데이터만들기.py`, `make_shortcut.py`가 `전처리`, `모델_불러오기`, `평균`, `표준편차`, `캔버스크기`, `가중치경로`, `아이콘경로`, `앱ID`, `프로젝트폴더`를 가져다 쓰므로 이름을 바꾸면 그쪽도 고칩니다. `app.py`는 import해도 창이 뜨지 않아야 합니다.
 - 정규화 상수는 `train.py`와 `app.py`에 따로 적혀 있으니 같게 유지합니다.
 - `app.py` 더블클릭 실행: 오류는 대화상자로 보여 주고, 더블클릭으로 생긴 콘솔 창은 숨기며, `앱ID`로 작업 표시줄 묶음을 맞춥니다. 바로가기는 `pythonw.exe`로 실행하므로 검은 창이 없습니다.
+- 콘솔 숨기기는 `GetConsoleProcessList`가 1(이 프로그램 혼자 쓰는 콘솔)일 때만 동작하므로, `py.exe` 런처 연결로 실행하면 콘솔을 다른 프로세스와 나눠 써 창이 그대로 보일 수 있습니다.
 
 ## 가중치 내보내기
 

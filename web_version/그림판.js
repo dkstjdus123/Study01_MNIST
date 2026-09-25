@@ -1,4 +1,4 @@
-// 작성: 2026-09-25 09:25
+// 작성: 2026-09-25 09:25 (수정: 2026-09-25 09:51 lostpointercapture에서도 붓떼기 호출)
 // 280x280 그림판: 검은 배경에 흰 글씨. 마우스·터치·펜을 포인터 이벤트 하나로 처리합니다.
 // 한 번에 한 포인터만 그리고(두 번째 손가락 무시), 마우스는 왼쪽 버튼만 씁니다.
 
@@ -57,6 +57,7 @@
     }
     캔버스.addEventListener("pointerup", 붓떼기);
     캔버스.addEventListener("pointercancel", 붓떼기);
+    캔버스.addEventListener("lostpointercapture", 붓떼기);   // pointerup 없이 캡처만 풀리는 경우 대비
     캔버스.addEventListener("contextmenu", e => e.preventDefault());   // 오른쪽 클릭 메뉴가 가리지 않게
 
     // 흑백 그림이므로 빨강 채널을 밝기로 씁니다.
