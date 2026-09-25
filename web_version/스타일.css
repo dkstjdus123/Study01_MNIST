@@ -1,0 +1,31 @@
+/* 작성: 2026-09-25 09:25 */
+:root {
+  --바탕: #f5f6f8;
+  --글자: #1f2328;
+  --흐림: #57606a;
+  --강조: #2e7d32;
+  --막대: #90a4ae;
+  --틀: #d0d7de;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --바탕: #16181c; --글자: #e6e8eb; --흐림: #9aa4ae; --강조: #66bb6a; --막대: #607d8b; --틀: #3a4048; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--바탕); color: var(--글자); font-family: system-ui, "맑은 고딕", sans-serif; }
+.학생정보 { padding: 10px 16px; background: var(--강조); color: #fff; font-weight: bold; text-align: center; }
+main { max-width: 640px; margin: 0 auto; padding: 16px; }
+h1 { margin: 8px 0; font-size: 1.5rem; }
+.안내 { color: var(--흐림); margin: 0 0 16px; }
+.작업영역 { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.그림판영역 { display: flex; flex-direction: column; gap: 8px; }
+#그림판 { width: 280px; max-width: 100%; aspect-ratio: 1; background: #000; border-radius: 8px; touch-action: none; cursor: crosshair; }
+#지우기 { padding: 8px; font-size: 1rem; border: 1px solid var(--틀); border-radius: 6px; background: transparent; color: var(--글자); cursor: pointer; }
+.결과영역 { flex: 1; min-width: 220px; }
+.예측 { font-size: 4rem; font-weight: bold; line-height: 1; }
+.신뢰도 { color: var(--흐림); margin: 4px 0 12px; }
+.막대줄 { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.막대줄 .숫자 { width: 1em; text-align: right; }
+.막대틀 { flex: 1; height: 12px; border: 1px solid var(--틀); border-radius: 3px; overflow: hidden; }
+.막대 { height: 100%; width: 0; background: var(--막대); }
+.막대.최대 { background: var(--강조); }
+.막대줄 .퍼센트 { width: 4em; text-align: right; font-variant-numeric: tabular-nums; }
